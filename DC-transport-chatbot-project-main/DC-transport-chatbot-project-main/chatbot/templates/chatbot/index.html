@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>DACE Transportation Chatbot</title>
+
+    <style>
+
+        body {
+            font-family: Arial;
+            background-color: #f2f2f2;
+            text-align: center;
+        }
+
+        .chat-container {
+            width: 600px;
+            margin: 50px auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+        }
+
+        input {
+            width: 70%;
+            padding: 12px;
+        }
+
+        button {
+            padding: 12px 20px;
+            cursor: pointer;
+        }
+
+        .response {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #eeeeee;
+            text-align: left;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="chat-container">
+
+        <h1>DACE Transportation Chatbot</h1>
+
+        <p>
+            Ask about bus routes, areas, and timings.
+        </p>
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+            <input
+                type="text"
+                name="message"
+                placeholder="Example: Route 21"
+                required
+            >
+
+            <button type="submit">
+                Send
+            </button>
+
+        </form>
+
+        {% if response %}
+
+        <div class="response">
+
+            <b>Bot:</b>
+
+            <br><br>
+
+            {{ response|safe }}
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</body>
+
+</html>

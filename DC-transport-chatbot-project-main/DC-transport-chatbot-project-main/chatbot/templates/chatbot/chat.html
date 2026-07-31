@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DACE Transportation Chatbot</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --background: #ffffff;
+            --sidebar: #171717;
+            --sidebar-hover: #303030;
+            --text: #202123;
+            --bot-message: #f2f2f2;
+            --user-message: #212121;
+            --user-text: #ffffff;
+            --input-background: #f3f3f3;
+            --border: #dddddd;
+            --header-border: #eeeeee;
+        }
+
+        body.dark {
+            --background: #212121;
+            --sidebar: #171717;
+            --sidebar-hover: #343434;
+            --text: #ececec;
+            --bot-message: #2f2f2f;
+            --user-message: #2f2f2f;
+            --user-text: #ffffff;
+            --input-background: #2f2f2f;
+            --border: #4a4a4a;
+            --header-border: #3d3d3d;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            transition: background 0.25s, color 0.25s;
+        }
+
+        /* =====================
+           SIDEBAR
+        ===================== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            padding: 14px;
+            overflow-y: auto;
+            background: var(--sidebar);
+            color: white;
+            z-index: 20;
+        }
+
+        .sidebar-top {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .new-chat {
+            flex: 1;
+            padding: 12px;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border: 1px solid #555;
+            border-radius: 9px;
+        }
+
+        .new-chat:hover {
+            background: var(--sidebar-hover);
+        }
+
+        .theme-button {
+            width: 45px;
+            border: 1px solid #555;
+            border-radius: 9px;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .theme-button:hover {
+            background: var(--sidebar-hover);
+        }
+
+        .sidebar-title {
+            margin: 18px 5px 10px;
+            color: #aaaaaa;
+            font-size: 12px;
+        }
+
+        .chat-history-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+
+        .chat-link {
+            flex: 1;
+            min-width: 0;
+            display: block;
+            padding: 12px;
+            overflow: hidden;
+            color: #eeeeee;
+            text-decoration: none;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            border-radius: 8px;
+        }
+
+        .chat-link:hover {
+            background: var(--sidebar-hover);
+        }
+
+        .active-chat {
+            background: #343434;
+        }
+
+        .delete-button {
+            width: 38px;
+            height: 38px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #aaaaaa;
+            cursor: pointer;
+        }
+
+        .delete-button:hover {
+            background: #3a3a3a;
+            color: white;
+        }
+
+        /* =====================
+           MAIN
+        ===================== */
+        .main {
+            min-height: 100vh;
+            margin-left: 260px;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 260px;
+            right: 0;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--background);
+            border-bottom: 1px solid var(--header-border);
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        /* =====================
+           MESSAGES
+        ===================== */
+        .messages {
+            width: 100%;
+            max-width: 900px;
+            min-height: 100vh;
+            margin: auto;
+            padding: 90px 20px 190px;
+        }
+
+        .message-row {
+            display: flex;
+            width: 100%;
+            margin-bottom: 18px;
+            animation: messageAppear 0.25s ease;
+            align-items: flex-start; /* FIX 1: stops vertical stretch */
+        }
+
+        .user-row {
+            justify-content: flex-end;
+        }
+
+        .bot-row {
+            justify-content: flex-start;
+        }
+
+        .message {
+            padding: 10px 16px;
+            font-size: 15px;
+            line-height: 1.55;
+            border-radius: 20px;
+        }
+
+        .user-message {
+            display: block;
+            width: fit-content;
+            max-width: 80%;
+            height: auto;
+            background: var(--user-message);
+            color: var(--user-text);
+            padding: 10px 14px;
+            margin-left: auto;
+            white-space: pre-wrap; /* FIX 2: won't render template newlines as space */
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            border-radius: 18px;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot-message {
+            width: fit-content;
+            max-width: 80%;
+            background: var(--bot-message);
+            color: var(--text);
+            border-bottom-left-radius: 5px;
+        }
+
+        .bot-message p {
+            margin: 5px 0;
+        }
+
+        /* =====================
+           TABLE
+        ===================== */
+        .bot-message table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .bot-message th,
+        .bot-message td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #888;
+        }
+
+        .bot-message th {
+            background: #444;
+            color: white;
+        }
+
+        /* =====================
+           WELCOME
+        ===================== */
+        .welcome {
+            margin-top: 150px;
+            text-align: center;
+        }
+
+        .welcome h1 {
+            font-size: 32px;
+        }
+
+        .welcome p {
+            color: #888;
+        }
+
+        /* =====================
+           INPUT
+        ===================== */
+        .input-area {
+            position: fixed;
+            left: 260px;
+            right: 0;
+            bottom: 0;
+            padding: 30px 20px 22px;
+            background: linear-gradient(transparent, var(--background) 30%);
+            z-index: 15;
+        }
+
+        .chat-form {
+            max-width: 850px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            margin: auto;
+            padding: 8px 9px 8px 16px;
+            background: var(--input-background);
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .chat-input {
+            flex: 1;
+            min-height: 24px;
+            max-height: 160px;
+            padding: 8px 4px;
+            overflow-y: auto;
+            resize: none;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--text);
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .chat-input::placeholder {
+            color: #888;
+        }
+
+        .send-button {
+            width: 42px;
+            height: 42px;
+            flex-shrink: 0;
+            border: none;
+            border-radius: 50%;
+            background: #212121;
+            color: white;
+            cursor: pointer;
+            font-size: 21px;
+        }
+
+        .send-button:hover {
+            background: #444;
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* =====================
+           LOADING
+        ===================== */
+        .loading-row {
+            display: none;
+        }
+
+        .loading-box {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 13px 16px;
+            background: var(--bot-message);
+            border-radius: 16px;
+            border-bottom-left-radius: 5px;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #888;
+            animation: loadingDots 1.2s infinite;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes loadingDots {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-6px);
+                opacity: 1;
+            }
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(7px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* =====================
+           MOBILE
+        ===================== */
+        @media (max-width: 700px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .header {
+                left: 0;
+            }
+
+            .input-area {
+                left: 0;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+
+            .user-message {
+                width: auto;
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-top">
+            <a href="{% url 'new_chat' %}" class="new-chat">
+                + New Chat
+            </a>
+            <button type="button" class="theme-button" id="themeButton">
+                🌙
+            </button>
+        </div>
+
+        <div class="sidebar-title">
+            CHAT HISTORY
+        </div>
+
+        {% for old_chat in chats %}
+            <div class="chat-history-item">
+                <a href="{% url 'chat' old_chat.id %}" class="chat-link {% if old_chat.id == chat.id %}active-chat{% endif %}">
+                    {{ old_chat.title }}
+                </a>
+                <form method="POST" action="{% url 'delete_chat' old_chat.id %}" onsubmit="return confirm('Delete this chat?');">
+                    {% csrf_token %}
+                    <button type="submit" class="delete-button">
+                        🗑
+                    </button>
+                </form>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+        <div class="header">
+            DACE Transportation Chatbot
+        </div>
+
+        <div class="messages" id="messages">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="message-row {% if message.sender == 'user' %}user-row{% else %}bot-row{% endif %}">
+                        <div class="message {% if message.sender == 'user' %}user-message{% else %}bot-message{% endif %}">{% if message.sender == "user" %}{{ message.message }}{% else %}{{ message.message|safe }}{% endif %}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="welcome">
+                    <h1>How can I help you?</h1>
+                    <p>Ask about DACE bus routes, boarding points, stops, timings, vehicles, or driver details.</p>
+                </div>
+            {% endif %}
+
+            <!-- LOADING -->
+            <div class="message-row bot-row loading-row" id="loadingRow">
+                <div class="loading-box">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INPUT -->
+    <div class="input-area">
+        <form method="POST" class="chat-form" id="chatForm">
+            {% csrf_token %}
+            <textarea name="message" class="chat-input" id="chatInput" placeholder="Message DACE Transportation Chatbot..." rows="1" required></textarea>
+            <button type="submit" class="send-button" id="sendButton">
+                ↑
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const chatForm = document.getElementById("chatForm");
+        const chatInput = document.getElementById("chatInput");
+        const messages = document.getElementById("messages");
+        const loadingRow = document.getElementById("loadingRow");
+        const sendButton = document.getElementById("sendButton");
+
+        window.addEventListener("load", function () {
+            chatInput.focus();
+        });
+
+        function resizeInput() {
+            chatInput.style.height = "auto";
+            chatInput.style.height = Math.min(chatInput.scrollHeight, 160) + "px";
+        }
+
+        chatInput.addEventListener("input", resizeInput);
+
+        chatInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                if (chatInput.value.trim() !== "") {
+                    if (typeof chatForm.requestSubmit === "function") {
+                        chatForm.requestSubmit();
+                    } else {
+                        sendButton.click();
+                    }
+                }
+            }
+        });
+
+        chatForm.addEventListener("submit", function (event) {
+            const userText = chatInput.value.trim();
+
+            if (userText === "") {
+                event.preventDefault();
+                chatInput.focus();
+                return;
+            }
+
+            const userRow = document.createElement("div");
+            userRow.className = "message-row user-row";
+
+            const userMessage = document.createElement("div");
+            userMessage.className = "message user-message";
+            userMessage.textContent = userText;
+
+            userRow.appendChild(userMessage);
+            messages.insertBefore(userRow, loadingRow);
+
+            loadingRow.style.display = "flex";
+            sendButton.disabled = true;
+
+            chatInput.focus();
+
+            setTimeout(function () {
+                window.scrollTo({
+                    top: document.body.scrollHeight,
+                    behavior: "smooth"
+                });
+            }, 50);
+        });
+
+        window.scrollTo(0, document.body.scrollHeight);
+
+        const themeButton = document.getElementById("themeButton");
+        const savedTheme = localStorage.getItem("daceTheme");
+
+        if (savedTheme === "dark") {
+            document.body.classList.add("dark");
+            themeButton.textContent = "☀️";
+        }
+
+        themeButton.addEventListener("click", function () {
+            document.body.classList.toggle("dark");
+
+            if (document.body.classList.contains("dark")) {
+                localStorage.setItem("daceTheme", "dark");
+                themeButton.textContent = "☀️";
+            } else {
+                localStorage.setItem("daceTheme", "light");
+                themeButton.textContent = "🌙";
+            }
+
+            chatInput.focus();
+        });
+    </script>
+</body>
+</html>
